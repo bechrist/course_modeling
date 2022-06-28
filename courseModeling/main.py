@@ -1,8 +1,9 @@
 # %% main.py - Executes Main Course Modeling Pipeline
 
+
 import os
 
-from courseModeling.course import CourseBuilder
+from course import CourseBuilder
 
 
 # %% Parameters

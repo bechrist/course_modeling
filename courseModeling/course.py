@@ -4,8 +4,8 @@
 import numpy.typing as npt
 from dataclasses import dataclass, field
 
-from courseModeling.loading import loader
-from courseModeling.selection import drawingGUI
+from loading import loader
+from selection import drawingGUI
 
 
 @dataclass(slots=True)

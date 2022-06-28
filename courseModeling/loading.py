@@ -5,12 +5,10 @@ import os
 
 from typing import Any
 import numpy.typing as npt
-from courseModeling.course import Course
+from courseModeling.course import Course # Circular Type Import
 
 import pickle
 import cv2 as cv
-
-
 
 
 def loader(directory: str, input: str) -> npt.ArrayLike | Course: 
