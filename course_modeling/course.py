@@ -1,54 +1,59 @@
-# %% course.py - Course and Builder Class Definitions 
-
-
-import numpy.typing as npt
+"""course.py - Course Definition"""
+import typing as typ
 from dataclasses import dataclass, field
 
-from loading import loader
-from selection import drawingGUI
+import numpy as np
 
+import matplotlib.pyplot as plt
+
+__all__ = ['Course', 'Trajectory']
 
 @dataclass(slots=True)
 class Course:
-    """Describes race course layout"""
+    """Course layout data"""
     image_path: str = None
-    image: npt.ArrayLike = None
-    boundary: list[npt.ArrayLike] = field(default_factory=list)
-    gate: list[npt.ArrayLike] = field(default_factory=list)
-    scale_len : float = None                             # Pixel Length [px]
-    scale_dist: float = None                             # Physical Distance [m]
+    image: np.ndarray = np.array([])
+    boundary: tuple[np.ndarray, np.ndarray] = field(default_factory=lambda: (np.array([]), np.array([])))
+    post: tuple[np.ndarray, np.ndarray] = field(default_factory=lambda: (np.array([]), np.array([])))
+    gate: np.ndarray = field(default_factory=lambda: np.array([]))
+    scale_factor: float = None      # [m/px]                              
     loop: bool = None
+
+    def plot(self):
+        fig = plt.figure()
+        #fig.set_dpi(150)
+
+        if self.image is not None:
+            plt.imshow(self.image)
+        
+        scale = 10 / np.max(fig.get_size_inches())
+        fig.set_size_inches(fig.get_size_inches()*scale)
+
+        if np.any(self.gate):
+            pt = lambda i,j,k: self.post[i][j,self.gate[i,k]]
+            for k in range(self.gate.shape[-1]):
+                plt.plot([pt(0,0,k), pt(1,0,k)], [pt(0,1,k), pt(1,1,k)], 'k')
+            
+            plt.plot(self.post[0][0], self.post[0][1], 'k.')
+            plt.plot(self.post[1][0], self.post[1][1], 'k.')
+
+        if np.any(self.boundary[0]) or np.any(self.boundary[1]): 
+            plt.plot(self.boundary[0][0], self.boundary[0][1], 'r.')
+            plt.plot(self.boundary[1][0], self.boundary[1][1], 'b.')
+
+        plt.axis('off')
+        plt.show()
+
+@dataclass(slots=True)
+class Trajectory:
+    course: Course
+    weight: np.ndarray
+    _arc_length: np.ndarray
+
+    def eval(s: float) -> np.ndarray:
+        """Given arc length return position and heading angle"""
+        raise NotImplementedError
     
-
-class CourseBuilder:
-    def __init__(self, input: str | Course, directory: str = None) -> None:
-        self.reset()
-
-        if isinstance(input, str):
-            self.load(directory, input)
-        elif isinstance(input, Course):
-            self._course = input
-        else:
-            raise ValueError('CourseBuilder may be given a path to an image or dumped Course object, or an existing Course object')
-
-    def reset(self) -> None:
-        self._course = Course()
-
-    @property
-    def course(self) -> Course:
-        course = self._course
-        self.reset()
-        return course
-
-    def load(self, directory: str, input: str) -> None:
-        data = loader(directory, input)
-
-        if isinstance(data, Course):
-            self._course = data
-        elif isinstance(data, npt.ArrayLike) and len(data.shape) == 3:
-            self._course.image = data
-        else:
-            raise ValueError('Input data must be an image ArrayLike or a Course object')
-
-    def select(self) -> None:
-        a = 1
+    def curvature(s: float) -> float:
+        """Evaluate curvature at a point on the spline"""
+        raise NotImplementedError
